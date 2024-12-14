@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 
 # Load data
@@ -35,6 +36,7 @@ def main():
             "Reorder Days",
             "Reorder Add To Cart",
             "Reorder Heatmap",
+            "Reorder Scatter Plot",
             "Conclusions"
         ],
     )
@@ -248,6 +250,57 @@ def main():
         with this heatmap for bins of cart position and days since prior order we can analyze that the products added first to the cart are reorder more quickly, that identify a pattern or essential products that needs to be replaced frequently 
         """
         )
+
+    elif plot_type == "Reorder Scatter Plot":
+
+        # Calculate percent of reorders and total purchases per department
+        department_stats = data.groupby('department', observed=True).agg(
+            total_purchases=('reordered', 'size'),
+            reorder_percent=('reordered', 'mean')
+        ).reset_index()
+
+        # Convert total purchases to thousands and apply log scale
+        department_stats['log_purchases'] = np.log10(department_stats['total_purchases'] / 1000)
+
+        # Scatter plot with department names as labels
+        fig, ax = plt.subplots(figsize=(12, 8))
+        scatter = ax.scatter(
+            x=department_stats['log_purchases'],
+            y=department_stats['reorder_percent'],
+            c=department_stats['total_purchases'],  # Color by total purchases
+            cmap='viridis',
+            alpha=0.8,
+            edgecolor='k'
+        )
+        
+        # Add department labels
+        for i, department in enumerate(department_stats['department']):
+            ax.text(
+                x=department_stats['log_purchases'].iloc[i],
+                y=department_stats['reorder_percent'].iloc[i],
+                s=department,
+                fontsize=8,
+                ha='right',  # Align text to the right
+                va='bottom'  # Align text slightly below the point
+            )
+        
+        # Add colorbar for purchases
+        cbar = plt.colorbar(scatter, ax=ax)
+        cbar.set_label('Total Purchases', fontsize=12)
+
+        # Set title and axis labels
+        ax.set_title('Reorder Percent vs Purchases (Log Scale) by Department', fontsize=14)
+        ax.set_xlabel('Log Purchases (Thousands)', fontsize=12)
+        ax.set_ylabel('Reorder Percent', fontsize=12)
+
+        # Render plot in Streamlit
+        st.pyplot(fig)
+
+        # Add insight
+        st.markdown("""
+         Departments with a high reorder percent and large total purchases represent recurring, essential products.  
+        """)
+
     elif plot_type == "Conclusions":
         st.header("Conclusion")
 
