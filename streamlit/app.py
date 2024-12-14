@@ -56,6 +56,8 @@ def main():
             - Information such as days since prior order, aisle category, and reorder status.
         """
         )
+        image_path = "images/app.jpg"
+        st.image(image_path,  use_container_width=True)
     elif plot_type == "Pre Processing":
         st.header("Pre-Processing")
         missing_values = """
